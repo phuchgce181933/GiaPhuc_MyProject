@@ -7,6 +7,8 @@ environment-driven configuration, and full test/UC/PlantUML documentation.
 > 📝 **Đang viết tài liệu?** Đọc `docs/DOC-GUIDE.md` trước — nó chỉ rõ file nào cần cập nhật cho từng loại thay đổi.
 >
 > Nghiệp vụ tổng quan nằm trong `docs/UC/UC-PACKAGE.md` (8 use case).
+>
+> 🤖 **AI agent / collaborator mới?** Đọc `.ai/skills/software-engineering/SKILL.md` — workflow 7 pha (Discover → Impact → Implement → Test → Docs → UML → Validate) với rules, templates và checklists có sẵn cho repo này.
 
 ## Stack
 
@@ -53,8 +55,18 @@ environment-driven configuration, and full test/UC/PlantUML documentation.
     ├── UC/UC-PACKAGE.md            # UC-01..UC-08
     ├── tests/UNIT-TEST.md          # 25 cases
     ├── tests/SYSTEM-TEST.md        # 24 scenarios
-    ├── plantuml/                   # CD-01, SD-01, SD-02
-    └── BACKLOG.md                  # Status report + issues
+    ├── plantuml/                   # CD-01, CD-02, SD-01..SD-06
+    ├── BACKLOG.md                  # Status report + issues
+    └── DOC-GUIDE.md                # Documentation policy
+
+.ai/
+  skills/
+    software-engineering/           # AI engineering skill (see SKILL.md)
+      SKILL.md                      # 7-phase workflow + source-of-truth rules
+      rules/                        # 11 concise rule files
+      templates/                    # 6 reusable templates (UC/CD/SD/UT/ST/backlog)
+      checklists/                   # 4 release / docs / UML / impl checklists
+      examples/UC-01..UC-08/        # per-UC working examples
 ```
 
 ## Backend — quick start
