@@ -1,0 +1,133 @@
+@startuml CD-02-Profile-and-Auth
+
+' ============================================================
+' Class Diagram — Profile & Auth (complement to CD-01)
+' Feature: Admin Staff Account Management / RBAC
+' Architecture: Router → Middleware → Controller → Service → Repository → Model
+' ============================================================
+
+!pragma useStickyOnly true
+skinparam classAttributeIconSize 0
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam linetype ortho
+
+title CD-02 — Profile & Auth (covers UC-02, UC-04, UC-05, UC-07, UC-08)
+
+' ---------- Shared infrastructure (referenced from CD-01) ----------
+class AuthMiddleware {
+  + authenticate(req, res, next)
+}
+
+class PermissionMiddleware {
+  + requirePermission(...perms) : Function
+}
+
+class ValidateMiddleware {
+  + validate(schema, source) : Function
+}
+
+class ErrorMiddleware {
+  + notFoundHandler()
+  + errorHandler(err, req, res, next)
+}
+
+class JwtUtil {
+  + signAccessToken(payload)
+  + signRefreshToken(payload)
+  + verifyAccessToken(token)
+  + verifyRefreshToken(token)
+}
+
+' ---------- Profile module ----------
+class ProfileRouter {
+  + GET /me
+  + GET /:id  (requirePermission VIEW_PROFILE)
+}
+
+class ProfileController {
+  + me(req, res, next)
+  + byId(req, res, next)
+}
+
+class ProfileService {
+  + getOwnProfile(user)
+  + getById(id)
+}
+
+' ---------- Auth module ----------
+class AuthRouter {
+  + POST /login
+  + POST /refresh
+}
+
+class AuthController {
+  + login(req, res, next)
+  + refresh(req, res, next)
+}
+
+class AuthService {
+  + login({email, password})
+  + refresh(token)
+}
+
+class AuthValidator {
+  + loginSchema
+  + refreshSchema
+}
+
+' ---------- Reused repositories/models (covered in CD-01) ----------
+class UserRepository {
+  + findById(id)
+  + setRole(id, roleId)
+  + setActive(id, isActive)
+  + findByEmail(email)
+  + findByPhone(phone)
+}
+
+class RoleRepository {
+  + findById(id)
+  + findAll()
+}
+
+class User {
+  - _id : ObjectId
+  - fullName : String
+  - email : String
+  - phone : String
+  - role : ObjectId
+  - isActive : Boolean
+  - passwordHash : String  ' select:false
+  + toSafeJSON()
+  + verifyPassword(plain)
+}
+
+class Role {
+  - _id : ObjectId
+  - name : String
+  - permissions : ObjectId[]
+}
+
+' ---------- Relationships ----------
+ProfileRouter ..> AuthMiddleware
+ProfileRouter ..> PermissionMiddleware
+ProfileRouter ..> ValidateMiddleware
+ProfileRouter ..> ProfileController
+ProfileController ..> ProfileService
+ProfileService ..> UserRepository
+UserRepository ..> User
+RoleRepository ..> Role
+
+AuthRouter ..> AuthController
+AuthRouter ..> ValidateMiddleware
+AuthRouter ..> AuthValidator
+AuthController ..> AuthService
+AuthService ..> UserRepository
+AuthService ..> User
+AuthService ..> JwtUtil
+
+ErrorMiddleware ..> AuthMiddleware
+ErrorMiddleware ..> PermissionMiddleware
+
+@enduml

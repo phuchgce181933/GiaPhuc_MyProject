@@ -1,0 +1,117 @@
+@startuml SD-01-Create-Staff
+
+' ============================================================
+' Sequence Diagram — Create Staff Account
+' Feature: Admin Staff Account Management
+' ============================================================
+
+!pragma useStickyOnly true
+skinparam classAttributeIconSize 0
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam linetype ortho
+
+title SD-01 — Create Staff Account
+
+actor "Admin" as Admin
+participant "React\nStaffCreatePage" as React
+participant "Axios API" as Axios
+participant "StaffRouter" as Router
+participant "AuthMiddleware" as AuthMw
+participant "PermissionMiddleware\n(CREATE_STAFF)" as PermMw
+participant "ValidateMiddleware\n(createStaffSchema)" as ValMw
+participant "StaffController" as Ctrl
+participant "StaffService" as Svc
+participant "RoleRepository" as RoleRepo
+participant "UserRepository" as UserRepo
+database "MongoDB" as DB
+participant "EmailService" as Email
+participant "SMTP Provider" as SMTP
+
+== Submit form ==
+Admin -> React : Fill form (fullName, email, phone, address, roleId, temporaryPassword?)
+Admin -> React : Click "Create staff"
+React -> Axios : POST {VITE_API_URL}/api/staff (Authorization: Bearer ...)
+Axios -> Router : HTTP POST
+
+== AuthN ==
+Router -> AuthMw : authenticate()
+AuthMw -> AuthMw : verifyAccessToken(token)
+AuthMw -> DB : findById(decoded.sub) + populate role.permissions
+DB --> AuthMw : User document
+AuthMw --> Router : req.user attached
+
+== AuthZ ==
+Router -> PermMw : requirePermission('CREATE_STAFF')
+alt role has CREATE_STAFF
+  PermMw --> Router : next()
+else missing
+  PermMw --> Axios : 403 Forbidden "Missing permission(s): CREATE_STAFF"
+  Axios --> React : toast.error
+end
+
+== Validation ==
+Router -> ValMw : validate(createStaffSchema)
+alt valid
+  ValMw --> Ctrl : req.body parsed
+else invalid
+  ValMw --> Axios : 400 Bad Request + details
+  Axios --> React : show error
+end
+
+Ctrl -> Svc : createStaff(input, req.user)
+
+== Service: business logic ==
+Svc -> RoleRepo : findById(roleId)
+RoleRepo -> DB : findOne
+DB --> RoleRepo : Role document
+alt role not found
+  RoleRepo --> Svc : null
+  Svc --> Ctrl : throw ApiError(400, "Role not found")
+end
+
+Svc -> UserRepo : findByEmail(email)
+Svc -> UserRepo : findByPhone(phone)
+Svc -> UserRepo : findByUsername(username) (if provided)
+alt duplicate
+  UserRepo --> Svc : existing user
+  Svc --> Ctrl : throw ApiError(409, "Duplicate <field>")
+end
+
+Svc -> Svc : generateTemporaryPassword() OR use provided
+Svc -> Svc : User.hashPassword(plain) [bcrypt, salt=10]
+Svc -> UserRepo : create({...rest, role, passwordHash, isActive: true})
+UserRepo -> DB : insert
+DB --> UserRepo : persisted User
+UserRepo --> Svc : User
+Svc -> UserRepo : findById(user._id) [populate role+permissions]
+UserRepo --> Svc : User with role
+
+== Email (best-effort) ==
+Svc -> Email : sendStaffAccountCreatedEmail({to, fullName, roleName, loginUrl, temporaryPassword})
+Email -> Email : build HTML + text, escape user input
+Email -> SMTP : sendMail
+alt SMTP ok
+  SMTP --> Email : 250 OK + messageId
+  Email --> Svc : { ok: true, messageId }
+  Svc -> Svc : logger.info("Email notification sent")
+else SMTP fail
+  SMTP --> Email : error
+  Email --> Svc : { ok: false, error }   // no credentials in log
+  Svc -> Svc : logger.error("Email notification failed")
+end
+
+Svc --> Ctrl : { user, emailNotificationSent, emailError }
+
+== Response ==
+Ctrl -> Axios : 201 Created\n{ success, message, data: { user, userId, emailNotificationSent } }
+Axios --> React : response
+alt emailNotificationSent
+  React -> Admin : toast.success "Staff created. Email sent."
+else !emailNotificationSent
+  React -> Admin : toast.warning "Staff created. Email failed."
+end
+React -> Admin : navigate /staff/:id
+
+@enduml

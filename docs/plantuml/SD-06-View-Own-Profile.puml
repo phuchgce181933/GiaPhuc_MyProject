@@ -1,0 +1,66 @@
+@startuml SD-06-View-Own-Profile
+
+' ============================================================
+' Sequence Diagram — View Own Profile
+' UC: UC-08 View Own Profile
+' Note: This route does NOT require VIEW_PROFILE — every
+' authenticated user can read their own profile.
+' ============================================================
+
+!pragma useStickyOnly true
+skinparam classAttributeIconSize 0
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam linetype ortho
+
+title SD-06 — View Own Profile (UC-08)
+
+actor "Any authenticated user" as U
+participant "React\nProfilePage" as React
+participant "Axios API" as Axios
+participant "ProfileRouter" as Router
+participant "AuthMiddleware" as AuthMw
+participant "ProfileController" as Ctrl
+participant "ProfileService" as Svc
+participant "UserRepository" as UserRepo
+database "MongoDB" as DB
+
+== Open /profile ==
+U -> React : Navigate to /profile
+React -> Axios : GET /api/profile/me  (Authorization: Bearer ...)
+Axios -> Router : HTTP GET
+
+== AuthN ==
+Router -> AuthMw : authenticate()
+alt missing/invalid token
+  AuthMw --> Axios : 401 UNAUTHORIZED
+  Axios --> React : redirect /login
+end
+AuthMw -> DB : findById(decoded.sub) + populate role.permissions
+DB --> AuthMw : User document
+alt !user.isActive
+  AuthMw --> Axios : 403 FORBIDDEN  "Account is deactivated"
+  Axios --> React : show forbidden / logout
+end
+AuthMw --> Router : req.user attached
+
+== Resolve (no permission middleware) ==
+Router -> Ctrl : me(req)
+Ctrl -> Svc : getOwnProfile(req.user)
+Svc -> UserRepo : findById(user._id) + populate role.permissions
+DB --> UserRepo : full User
+UserRepo --> Svc : User
+alt user vanished (deleted)
+  UserRepo --> Svc : null
+  Svc --> Ctrl : throw ApiError(404, "User not found")
+  Ctrl --> Axios : 404 NOT_FOUND
+end
+Svc -> Svc : toSafeJSON() (strips passwordHash, activationToken, __v)
+Svc --> Ctrl : safe DTO
+
+Ctrl --> Axios : 200 { success: true, data: <safe DTO> }
+Axios --> React : response
+React -> U : Render profile (fullName, email, phone, address, role, permissions)
+
+@enduml

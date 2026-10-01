@@ -1,0 +1,67 @@
+@startuml SD-02-View-Profile
+
+' ============================================================
+' Sequence Diagram — View Profile (with VIEW_PROFILE permission)
+' Feature: RBAC / Profile Permission
+' ============================================================
+
+!pragma useStickyOnly true
+skinparam classAttributeIconSize 0
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam linetype ortho
+
+title SD-02 — View Profile
+
+actor "User (any role)" as User
+participant "React\nProfilePage / StaffView" as React
+participant "Axios API" as Axios
+participant "ProfileRouter" as Router
+participant "AuthMiddleware" as AuthMw
+participant "PermissionMiddleware\n(VIEW_PROFILE)" as PermMw
+participant "ProfileController" as Ctrl
+participant "ProfileService" as Svc
+participant "UserRepository" as UserRepo
+database "MongoDB" as DB
+
+== Open profile ==
+User -> React : Open /profile/:id (other user)
+React -> Axios : GET {VITE_API_URL}/api/profile/:id
+Axios -> Router : HTTP GET
+
+== AuthN ==
+Router -> AuthMw : authenticate()
+alt missing/invalid token
+  AuthMw --> Axios : 401 Unauthorized
+  Axios --> React : redirect /login
+end
+AuthMw -> DB : findById(decoded.sub) + populate role.permissions
+DB --> AuthMw : req.user attached
+
+== AuthZ ==
+Router -> PermMw : requirePermission('VIEW_PROFILE')
+alt role has VIEW_PROFILE
+  PermMw --> Ctrl : next()
+else missing
+  PermMw --> Axios : 403 Forbidden "Missing permission(s): VIEW_PROFILE"
+  Axios --> React : show forbidden
+end
+
+== Resolve ==
+Ctrl -> Svc : getById(id)
+Svc -> UserRepo : findById(id) + populate role.permissions
+alt user not found
+  UserRepo --> Svc : null
+  Svc --> Ctrl : throw ApiError(404, "Staff not found")
+  Ctrl --> Axios : 404 Not Found
+end
+UserRepo --> Svc : User
+Svc -> Svc : toSafeJSON() (strips passwordHash, activationToken, __v)
+Svc --> Ctrl : safe DTO
+
+Ctrl --> Axios : 200 OK { success: true, data: <safe DTO> }
+Axios --> React : response
+React -> User : Render profile
+
+@enduml

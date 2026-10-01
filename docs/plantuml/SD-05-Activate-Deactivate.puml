@@ -1,0 +1,78 @@
+@startuml SD-05-Activate-Deactivate
+
+' ============================================================
+' Sequence Diagram — Activate / Deactivate Account
+' UC: UC-05 Activate / Deactivate Account
+' ============================================================
+
+!pragma useStickyOnly true
+skinparam classAttributeIconSize 0
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam linetype ortho
+
+title SD-05 — Activate / Deactivate Account (UC-05)
+
+actor "User with UPDATE_STAFF" as A
+participant "React\nStaffEditPage" as React
+participant "Axios API" as Axios
+participant "StaffRouter" as Router
+participant "AuthMiddleware" as AuthMw
+participant "PermissionMiddleware\n(UPDATE_STAFF)" as PermMw
+participant "ValidateMiddleware\n(updateStatusSchema)" as ValMw
+participant "StaffController" as Ctrl
+participant "StaffService" as Svc
+participant "UserRepository" as UserRepo
+database "MongoDB" as DB
+
+== Submit status change ==
+A -> React : Click "Activate" or "Deactivate"
+React -> Axios : PATCH /api/staff/:id/status  (body: { isActive })
+Axios -> Router : HTTP PATCH
+Router -> AuthMw : authenticate()
+AuthMw --> Router : req.user attached
+
+Router -> PermMw : requirePermission('UPDATE_STAFF')
+alt has UPDATE_STAFF
+  PermMw --> Router : next()
+else
+  PermMw --> Axios : 403 FORBIDDEN  "Missing permission(s): UPDATE_STAFF"
+end
+
+Router -> ValMw : validate(updateStatusSchema) — body must be { isActive: boolean }
+alt valid
+  ValMw --> Ctrl : req.body.isActive parsed
+else invalid (missing / wrong type)
+  ValMw --> Axios : 400 BAD_REQUEST  details: [{ path: "isActive" }]
+end
+
+Ctrl -> Svc : setActive(id, isActive)
+Svc -> UserRepo : findById(id)
+DB --> UserRepo : user
+alt user not found
+  UserRepo --> Svc : null
+  Svc --> Ctrl : throw ApiError(404, "Staff not found")
+  Ctrl --> Axios : 404 NOT_FOUND
+end
+
+Svc -> UserRepo : setActive(id, isActive)
+UserRepo -> DB : findByIdAndUpdate(id, { isActive }, { new: true }) + populate
+DB --> UserRepo : updated User
+UserRepo --> Svc : User
+Svc -> Svc : logger.info("Staff status changed")
+Svc -> Svc : toSafeJSON()
+Svc --> Ctrl : safe DTO
+Ctrl --> Axios : 200 { success: true, data: <safe DTO> }
+Axios --> React : response
+React -> A : toast.success("Staff activated/deactivated")
+
+== Downstream effect on deactivated account ==
+note over Svc, DB
+  Once isActive=false is persisted, the authenticate() middleware
+  rejects the deactivated user's JWT on the next request:
+    AuthMw → throw ApiError.forbidden("Account is deactivated")
+    → HTTP 403.
+end note
+
+@enduml

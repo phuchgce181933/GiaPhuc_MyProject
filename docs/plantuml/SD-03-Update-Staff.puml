@@ -1,0 +1,108 @@
+@startuml SD-03-Update-Staff
+
+' ============================================================
+' Sequence Diagram — Update Staff Profile
+' UC: UC-03 Update Staff Profile
+' ============================================================
+
+!pragma useStickyOnly true
+skinparam classAttributeIconSize 0
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam linetype ortho
+
+title SD-03 — Update Staff Profile (UC-03)
+
+actor "User with UPDATE_STAFF" as U
+participant "React\nStaffEditPage" as React
+participant "Axios API" as Axios
+participant "StaffRouter" as Router
+participant "AuthMiddleware" as AuthMw
+participant "PermissionMiddleware\n(UPDATE_STAFF)" as PermMw
+participant "ValidateMiddleware\n(updateStaffSchema)" as ValMw
+participant "StaffController" as Ctrl
+participant "StaffService" as Svc
+participant "UserRepository" as UserRepo
+database "MongoDB" as DB
+
+== Open edit form ==
+U -> React : Click "Edit" on /staff/:id
+React -> Axios : GET /api/staff/:id  (Authorization: Bearer ...)
+Axios -> Router : HTTP GET
+Router -> AuthMw : authenticate()
+AuthMw -> DB : findById(decoded.sub) + populate role.permissions
+DB --> AuthMw : req.user
+AuthMw --> Router : next()
+Router -> PermMw : requirePermission('VIEW_STAFF')
+alt has VIEW_STAFF
+  PermMw --> Ctrl : list/getOne path → controller.getOne
+else
+  PermMw --> Axios : 403 FORBIDDEN
+end
+Ctrl -> Svc : getStaff(id)
+Svc -> UserRepo : findById(id) + populate role.permissions
+DB --> UserRepo : User
+UserRepo --> Svc : User
+Svc -> Svc : toSafeJSON()
+Svc --> Ctrl : safe DTO
+Ctrl --> Axios : 200 { data: <safe DTO> }
+Axios --> React : hydrate form
+
+== Submit updates ==
+U -> React : Change fields, click "Save changes"
+React -> Axios : PUT /api/staff/:id  (body: patch)
+Axios -> Router : HTTP PUT
+Router -> AuthMw : authenticate()
+AuthMw --> Router : req.user attached
+Router -> PermMw : requirePermission('UPDATE_STAFF')
+alt has UPDATE_STAFF
+  PermMw --> Router : next()
+else
+  PermMw --> Axios : 403 FORBIDDEN  "Missing permission(s): UPDATE_STAFF"
+end
+
+Router -> ValMw : validate(updateStaffSchema)
+alt valid
+  ValMw --> Ctrl : req.body parsed
+else invalid
+  ValMw --> Axios : 400 BAD_REQUEST  details: [...]
+end
+
+Ctrl -> Svc : updateStaff(id, patch)
+Svc -> UserRepo : findById(id)
+DB --> UserRepo : existing User
+UserRepo --> Svc : existing
+
+== Duplicate re-check (only if email/phone changed) ==
+alt patch.email !== existing.email
+  Svc -> UserRepo : findByEmail(patch.email)
+  DB --> UserRepo : candidate
+  alt candidate && candidate._id !== id
+    UserRepo --> Svc : duplicate
+    Svc --> Ctrl : throw ApiError(409, "Duplicate email")
+    Ctrl --> Axios : 409 CONFLICT
+  end
+end
+alt patch.phone !== existing.phone
+  Svc -> UserRepo : findByPhone(patch.phone)
+  DB --> UserRepo : candidate
+  alt candidate && candidate._id !== id
+    UserRepo --> Svc : duplicate
+    Svc --> Ctrl : throw ApiError(409, "Duplicate phone")
+    Ctrl --> Axios : 409 CONFLICT
+  end
+end
+
+Svc -> UserRepo : updateById(id, patch) + runValidators
+UserRepo -> DB : findByIdAndUpdate
+DB --> UserRepo : updated User
+UserRepo --> Svc : User
+Svc -> Svc : logger.info("Staff account updated")
+Svc -> Svc : toSafeJSON()
+Svc --> Ctrl : safe DTO
+Ctrl --> Axios : 200 { success: true, data: <safe DTO> }
+Axios --> React : response
+React -> U : toast.success("Staff updated") → navigate /staff/:id
+
+@enduml
