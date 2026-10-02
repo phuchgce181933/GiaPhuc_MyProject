@@ -3,6 +3,21 @@
 Mirror this template into `docs/UC/UC-PACKAGE.md`. Do **not** create a separate
 `UC-XX.md` per use case — the package file is canonical.
 
+## 1 : 1 : 1 rule
+
+Every UC must have **exactly one Class Diagram** and **exactly one Sequence
+Diagram**, named:
+
+- `CD-XX-<UCName>.puml`
+- `SD-XX-<UCName>.puml`
+
+The same `XX` is used across all three artefacts. The traceability table in
+`docs/UC/UC-PACKAGE.md` is therefore 1 : 1 : 1, not M : N.
+
+Before creating a new UC, apply **`rules/13-use-case-optimization-and-grouping.md`**
+to confirm this is a real new user goal, not a button / endpoint /
+side-effect / CRUD variation.
+
 ---
 
 ## UC-XX — <Title>

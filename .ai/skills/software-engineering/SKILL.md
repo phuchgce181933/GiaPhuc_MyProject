@@ -1,171 +1,117 @@
 # Software Engineering Skill — GiaPhuc_MyProject
 
-> Reusable AI Engineering Skill for the **Admin Staff Account Management + RBAC
-> + Profile Permission** project. This skill teaches an AI agent how to
-> implement, document, test, model and track work in this repository
-> **without inventing architecture**.
+> Reusable AI Engineering Skill for **Admin Staff Account Management + RBAC +
+> Profile Permission**. Teaches any AI agent how to implement, document, test,
+> model and track work **without inventing architecture**.
 
 ---
 
-## 0. How to use this skill
+## 0. Đọc gì đầu tiên?
 
-When an AI agent is asked to:
+Đừng đọc hết file này. Mở **[AI-READING-GUIDE.md](./AI-READING-GUIDE.md)** trước — đó là bản đồ đọc nhanh theo task type. File này chỉ chứa tóm tắt.
 
-- implement a new feature,
-- modify an existing feature,
-- analyse a change,
-- update documentation / UML,
-- audit consistency,
+## 1. How to use this skill
 
-it MUST follow the workflow in **§1 Workflow** below and obey every rule under
-**§2 Rules**. Each rule is a single short file under `rules/` so the agent can
-load only what it needs.
+Khi AI được yêu cầu **implement / modify / analyse / update doc / audit**:
 
-This skill is **layered on top of the project's existing documentation**. It
-does NOT replace them — it references and orchestrates them.
+| Bước | Hành động |
+| ---- | --------- |
+| 1 | Mở `AI-READING-GUIDE.md` → chọn reading map theo task |
+| 2 | Đọc `WORKFLOW.md` Phase A (Discover) + Phase B (Impact) |
+| 3 | Đọc `rules/01–13` nếu có rule liên quan đến task |
+| 4 | Thực thi Phase C–G |
+| 5 | Chạy `scripts/check-skill-compliance.js` trước khi commit |
 
-| Existing artefact (do not duplicate) | Used for |
-| ------------------------------------ | -------- |
-| `docs/UC/UC-PACKAGE.md`              | authoritative UC definitions (UC-01..UC-08) |
-| `docs/tests/UNIT-TEST.md`            | authoritative unit-test cases (UT-01..UT-25) |
-| `docs/tests/SYSTEM-TEST.md`          | authoritative system-test scenarios (ST-01..ST-24) |
-| `docs/plantuml/CD-*.puml`, `SD-*.puml` | authoritative UML — must match implementation |
-| `docs/BACKLOG.md`                    | authoritative status & issues ledger |
-| `docs/DOC-GUIDE.md`                  | documentation policy (extends rule 08) |
-| `README.md`                          | public-facing entry point |
+Skill **không thay thế** docs hiện có — nó orchestrate chúng:
 
-The skill **does** provide new artefacts that did not exist before:
+| Existing artefact | Role |
+| ----------------- | ---- |
+| `docs/UC/UC-PACKAGE.md`       | UC definitions (UC-01..UC-08) |
+| `docs/tests/UNIT-TEST.md`     | Unit-test cases (UT-01..UT-25) |
+| `docs/tests/SYSTEM-TEST.md`   | System-test scenarios (ST-01..ST-24) |
+| `docs/plantuml/CD-*.puml`     | Class Diagrams — 1 UC = 1 CD |
+| `docs/plantuml/SD-*.puml`     | Sequence Diagrams — 1 UC = 1 SD |
+| `docs/BACKLOG.md`             | Status + issues ledger |
+| `docs/DOC-GUIDE.md`           | Documentation policy |
 
-- change-impact matrix (`rules/11-change-impact-analysis.md`)
-- drift detection process (rule `10-validation.md`)
-- checklists (`checklists/`)
-- per-UC examples (`examples/UC-XX-*`) that consolidate UC + SD + UT + ST for one slice
-- structured PlantUML templates so generated diagrams are visually consistent.
+## 2. Workflow (7 phase)
 
----
+| Phase | Output | Tooling |
+| ----- | ------ | ------- |
+| A — Discover | "What I found" + files | `Grep`, `Glob`, `Read` |
+| B — Impact | 15-row matrix + TYPE | `rules/11`, `templates/change-classification.md` |
+| C — Implement | code diff | `rules/02-architecture.md` |
+| D — Test | test command + result | `npm test`, `npm run lint` |
+| E — Docs | doc diff | `rules/08`, `rules/12` |
+| F — UML | puml diff | `rules/03`, `rules/04`, `rules/05` |
+| G — Validate | PASS/FAIL + Summary | `rules/10`, `checklists/release-checklist.md` |
 
-## 1. Workflow
+Chi tiết mỗi phase: `WORKFLOW.md`. Skip = defect.
 
-Every task runs through **seven phases**, in order. Skipping a phase is a defect.
+## 3. Rules (13 files)
 
-| Phase | Output | Tooling / artefacts |
-| ----- | ------ | ------------------- |
-| A — Discover | list of relevant files + ids | `Grep`, `Glob`, `Read` |
-| B — Change Impact Analysis | impact matrix | `rules/11-change-impact-analysis.md` |
-| C — Implement | source-code change | existing `backend/src/**`, `frontend/src/**` |
-| D — Test | passing test command + result | `npm test`, `npm run lint` |
-| E — Documentation Update | doc diff | `rules/08-documentation.md` |
-| F — UML Update | puml diff | `rules/04-class-diagram.md`, `05-sequence-diagram.md` |
-| G — Final Consistency Validation | checklist with PASS/FAIL | `checklists/release-checklist.md` |
+| # | File | One-line |
+| - | ---- | -------- |
+| 01 | `01-source-of-truth.md` | Code wins; report drift, đừng sửa code theo doc cũ |
+| 02 | `02-architecture.md` | Router→Middleware→Controller→Service→Repository→Model (default, không phải luật) |
+| 03 | `03-use-case.md` | UC theo `UC-PACKAGE.md` template. **HARD RULE: 1 UC = 1 CD + 1 SD** |
+| 04 | `04-class-diagram.md` | CD phản ánh class thật, orthogonal edges, B&W |
+| 05 | `05-sequence-diagram.md` | SD phản ánh runtime call thật, có middleware categories |
+| 06 | `06-plantuml-style.md` | skinparam block dùng chung; không màu |
+| 07 | `07-testing.md` | UT/ST phản ánh test đã chạy; PASS chỉ khi có output |
+| 08 | `08-documentation.md` | Follow `docs/DOC-GUIDE.md`; AI-specific addendum |
+| 09 | `09-backlog.md` | 1 row / task trong BACKLOG; 1 row / issue trong Issues |
+| 10 | `10-validation.md` | Drift detection + final consistency check |
+| 11 | `11-change-impact-analysis.md` | 15-row matrix trước khi edit; từ chối edit file ngoài matrix |
+| 12 | `12-library-framework-changelog.md` | Mỗi dep add/upgrade/remove phải ghi `DEPENDENCIES.md` + `docs/STACK.md` |
+| 13 | `13-use-case-optimization-and-grouping.md` | **2 HARD RULES**: UC = user goal (không phải button); đừng over-merge |
 
-Full phase descriptions live in the parent task brief that produced this skill;
-they are summarised again in `rules/02-architecture.md`.
+## 4. Templates + Checklists + Examples
 
----
+| | Path | Khi nào |
+| - | ---- | ------ |
+| Templates | `templates/` | Điền shell trước khi viết UC/CD/SD/UT/ST |
+| Checklists | `checklists/` | Trước commit / trước declare milestone |
+| Examples | `examples/` | 8 UC, mỗi UC có `README.md` + `notes.md` |
 
-## 2. Rules (11 short files in `rules/`)
-
-| # | File | One-line summary |
-| - | ---- | ---------------- |
-| 01 | `01-source-of-truth.md` | When docs disagree with code, code wins; report drift, don't silently edit code to match a stale diagram. |
-| 02 | `02-architecture.md` | The Router→Middleware→Controller→Service→Repository→Model pattern is a default, not a law. Only include participants that actually participate. |
-| 03 | `03-use-case.md` | UCs must follow the `UC-PACKAGE.md` template; never silently renumber UC IDs. |
-| 04 | `04-class-diagram.md` | Class Diagrams reflect real classes only; orthogonal edges; black & white. |
-| 05 | `05-sequence-diagram.md` | Sequence Diagrams reflect real runtime calls; `actor / boundary / control / repository / entity / database` categories. |
-| 06 | `06-plantuml-style.md` | Reusable skinparam block; no colours; avoid syntax that creates accidental blue links. |
-| 07 | `07-testing.md` | UT/ST docs mirror real executed tests; never claim PASS without command + output. |
-| 08 | `08-documentation.md` | Follow `docs/DOC-GUIDE.md`; this rule is an AI-specific addendum. |
-| 09 | `09-backlog.md` | One row per task in BACKLOG.md; one row per issue in Project Issues. |
-| 10 | `10-validation.md` | Drift detection + final consistency check before declaring done. |
-| 11 | `11-change-impact-analysis.md` | Build a 12-column impact matrix before editing; refuse edits to unaffected files. |
-
----
-
-## 3. Templates (in `templates/`)
-
-These are **shells** — AI fills them in.
-
-| Template | Mirrors existing doc | Notes |
-| -------- | -------------------- | ----- |
-| `use-case-template.md` | `docs/UC/UC-PACKAGE.md` | Field table identical to UC-PACKAGE.md. |
-| `class-diagram-template.puml` | `docs/plantuml/CD-01-Staff-Management.puml` | Uses the project's standard skinparams. |
-| `sequence-diagram-template.puml` | `docs/plantuml/SD-01-Create-Staff.puml` | Uses the project's standard skinparams. |
-| `unit-test-template.md` | `docs/tests/UNIT-TEST.md` | 7-column table. |
-| `system-test-template.md` | `docs/tests/SYSTEM-TEST.md` | 7-column table. |
-| `backlog-template.md` | `docs/BACKLOG.md` | Two sections: Status Report + Project Issues. |
-
----
-
-## 4. Checklists (in `checklists/`)
-
-| File | When to use |
-| ---- | ----------- |
-| `implementation-checklist.md` | After every code change, before committing. |
-| `documentation-checklist.md` | After writing docs, before committing. |
-| `uml-checklist.md` | After generating any puml. |
-| `release-checklist.md` | Before declaring a milestone / UC complete. |
-
----
-
-## 5. Examples (in `examples/`)
-
-Eight per-UC working examples — one per UC in the existing package. **The folder
-names match `docs/UC/UC-PACKAGE.md`**, NOT the informal list in the task brief.
-A `examples/README.md` explains the discrepancy (Login/Refresh are candidates
-for UC-09 / UC-10 and are not yet in `UC-PACKAGE.md`).
-
-Each example folder contains a small, **traceable** set of artefacts:
+## 5. Source-of-truth priority
 
 ```
-UC-XX-Name/
-  README.md        # one-paragraph summary + links to UC-PACKAGE / SD / UT / ST
-  notes.md         # change-impact matrix + drift notes for this UC
-  sd-stub.puml     # reference (or extension) to docs/plantuml/SD-XX-*.puml
+1. User requirement (verbatim)
+2. Source code ← HIGHEST
+3. Tests
+4. API impl (router → controller → service)
+5. Model / repository
+6. docs/UC/UC-PACKAGE.md
+7. docs/plantuml/CD-*.puml
+8. docs/plantuml/SD-*.puml
+9. README / docs/DOC-GUIDE.md
+10. AI assumptions ← luôn re-check
 ```
 
-Examples are intentionally **small** — they illustrate the workflow, not the
-full implementation. The real artefacts live in `docs/`.
+**Stop and report** khi 1–9 xung đột. Không tự ý pick winner.
 
----
+## 6. Completion gate
 
-## 6. Source-of-truth priority
+Task **CHƯA complete** cho đến khi mọi box trong `checklists/release-checklist.md` đã check. Phase G = hard gate.
 
-When sources disagree, use this order (highest priority first):
+## 7. HARD RULES
 
-1. Explicit current user requirement
-2. Actual source code (`backend/src/**`, `frontend/src/**`)
-3. Actual tests (`backend/tests/**`)
-4. Existing API implementation (router → controller → service)
-5. Existing model / repository implementation
-6. Existing approved UC (`docs/UC/UC-PACKAGE.md`)
-7. Existing Class Diagram (`docs/plantuml/CD-*.puml`)
-8. Existing Sequence Diagram (`docs/plantuml/SD-*.puml`)
-9. README / `docs/DOC-GUIDE.md`
-10. Previous AI assumptions (lowest — always re-check)
-
-If 1-9 disagree, **stop and report**. Do not pick a winner unilaterally.
-
----
-
-## 7. Completion gate
-
-A task is **not** complete until every box in
-`checklists/release-checklist.md` is checked. The single most-skipped step
-historically is **PHASE G — final consistency validation**. Treat it as a hard
-gate.
-
----
+| # | Rule | Reference |
+| - | ---- | --------- |
+| HR-1 | 1 UC = 1 CD + 1 SD | `rules/03-use-case.md` |
+| HR-2 | Skip Phase = defect | `WORKFLOW.md` |
+| HR-3 | Không bịa class/endpoint/permission | `rules/01-source-of-truth.md` |
+| HR-4 | UC = user goal (không phải button/field) | `rules/13-use-case-optimization-and-grouping.md` |
+| HR-5 | Phase G = hard gate | `checklists/release-checklist.md` |
 
 ## 8. Out of scope
 
-This skill does NOT cover:
-
-- infrastructure provisioning (MongoDB Atlas cluster, SMTP provider swap)
-- CI/CD pipeline setup
-- production hardening (rate limiting, httpOnly cookies) — these are tracked in
-  `docs/BACKLOG.md` Project Issues #5, #6.
-- renumbering of existing UC IDs
-- changing existing PlantUML style without updating rule 06 and `DOC-GUIDE.md`.
+- Infrastructure provisioning (MongoDB, SMTP)
+- CI/CD pipeline
+- Production hardening (rate limit, httpOnly) — track ở `docs/BACKLOG.md`
+- Đổi số UC id cũ
+- Đổi PlantUML style mà không update `rules/06` + `DOC-GUIDE.md` cùng commit
 
 ---
 

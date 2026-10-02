@@ -21,6 +21,52 @@ After every code change, run:
 - Never copy the entire implementation into a doc — describe the behaviour, not
   the source.
 
+## Per-UC README standard (developer-first)
+
+When `examples/UC-XX-Name/README.md` exists (or is created), it MUST be
+**developer-facing** — readable on its own without bouncing to other files.
+
+The README must answer all of:
+
+1. What does this UC do? (purpose)
+2. Who is the actor?
+3. What permission / preconditions are required?
+4. What is the trigger (UI / API / system event)?
+5. What is the API (method + path)?
+6. What is the input shape?
+7. What is the main flow, step by step?
+8. What are the alternative / error flows?
+9. What are the important business rules?
+10. Where is the source code (layer-by-layer)?
+11. Where are the unit / system tests?
+12. Which Class Diagram and Sequence Diagram?
+13. Which related docs (UC-PACKAGE / BACKLOG / README)?
+
+Required template lives in `examples/UC-01-Create-Staff/README.md` and is
+mirrored in every other UC example. Any UC example whose README is shorter
+than ~50 lines is a defect.
+
+## notes.md purpose (maintenance only)
+
+`examples/UC-XX-Name/notes.md` is **not** documentation. It is for:
+
+- change-impact matrix (12 rows, simplified form of `rules/11`),
+- drift observations,
+- source mapping (which file changed when this UC was last touched),
+- validation notes (what to verify before declaring this UC done),
+- dependency notes (per `rules/12` if a dep was added for this UC).
+
+Required header:
+
+```
+# UC-XX — Maintenance Notes
+
+> This file contains maintenance and validation metadata.
+> It is not the primary developer documentation for this UC.
+```
+
+notes.md must NOT repeat the business flow already in README.md.
+
 ## Source-of-truth interaction
 
 If a doc contradicts the implementation after a code change, follow rule 01

@@ -14,6 +14,13 @@ skinparam nodesep 60
 skinparam ranksep 50
 skinparam linetype ortho
 
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    ArrowColor #000000
+    FontColor #000000
+}
+
 title CD-XX — <Name>
 
 ' ---------- Participants ----------

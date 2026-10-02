@@ -71,3 +71,19 @@ A child step's number MUST be ≥ the parent step it belongs to.
 - Adding a `Middleware` participant that the route does not register.
 - Adding `EmailService` when the UC is not an email-trigger UC.
 - Two participants named the same thing (e.g. two `Controller`).
+
+## Hard rule
+
+- **One UC = one SD.** See the HARD RULE block at the end of
+  `rules/03-use-case.md`. Do **not** create an SD that combines two or more
+  UCs as parallel branches (e.g. UC-01 success + UC-01 error in one SD is
+  fine; UC-01 + UC-02 + UC-08 in the same SD is not). Each UC gets its own
+  SD file, even when the participants are largely the same.
+- **Cardinality is 1 : 1 : 1.** `UC-XX` ↔ `CD-XX-<Name>.puml` ↔
+  `SD-XX-<Name>.puml`. The same UC id `XX` is used in all three filenames.
+- **Shared participants are allowed.** Two UCs may share `Router`,
+  `Controller`, `MongoDB` — each UC still gets its own SD and those
+  participants appear in both.
+- **Shared diagrams are forbidden.** A single SD must not serve more than
+  one UC. A "sub-flow of UC-01" referenced from UC-06 is still a violation
+  of 1 : 1 : 1 — UC-06 must have its own `SD-06-...puml`.

@@ -44,3 +44,17 @@ Default direction: top-down (Router at top, DB not drawn on CD).
 - Adding classes that "look architecturally correct" but are not in `src/`.
 - Drawing a UC's CD with classes from a different UC just because they share
   a module.
+
+## Hard rule
+
+- **One UC = one CD.** See the HARD RULE block at the end of
+  `rules/03-use-case.md`. Do **not** create a CD that mixes two or more UCs
+  (e.g. `CD-01-Staff-CRUD-and-Auth.puml` covering UC-01 + UC-02 + UC-08).
+  If two UCs share classes, both UCs still get their own CD and the shared
+  classes appear in both.
+- **Cardinality is 1 : 1 : 1.** `UC-XX` ↔ `CD-XX-<Name>.puml` ↔
+  `SD-XX-<Name>.puml`. The same UC id `XX` is used in all three filenames.
+- **Shared classes are allowed.** Two UCs may share the `User` class —
+  each UC still gets its own CD, and `User` is drawn in both.
+- **Shared diagrams are forbidden.** A single CD must not serve more than
+  one UC, regardless of how tempting the consolidation feels.

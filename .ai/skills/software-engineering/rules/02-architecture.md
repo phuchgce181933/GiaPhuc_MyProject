@@ -28,6 +28,23 @@ This is a **default**, not a law.
   suitable static method (`User.findById`).
 - Middleware that is not registered on the route MUST NOT appear in the SD.
 
+### Middleware-in-SD clarification
+
+The sequence-diagram template (`templates/sequence-diagram-template.puml`)
+includes `AuthMiddleware`, `PermissionMiddleware`, `ValidateMiddleware` as
+**default participants**. They are listed to remind the AI of the common
+shape, but the rule above still binds:
+
+- Remove `PermissionMiddleware` from the SD if the route does not call
+  `requirePermission(...)`.
+- Remove `ValidateMiddleware` if the route has no body to validate (e.g.
+  `GET`, `DELETE` with no schema).
+- Remove `AuthMiddleware` only if the route is intentionally public (rare —
+  flag in the UC body).
+
+If all three are removed, the SD becomes a 2-party diagram (Actor → Page →
+Axios → Router → DB / SMTP). That is fine — minimal is correct.
+
 ## Existing module layout
 
 ```

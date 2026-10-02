@@ -1,26 +1,28 @@
 # Rule 11 — Change Impact Analysis
 
-Before editing **any** file, build a 12-column impact matrix.
+Before editing **any** file, build a 15-area impact matrix.
 
 ## The matrix
 
-| Area | Affected? | Files | Reason |
-| ---- | --------- | ----- | ------ |
-| Backend module(s) | yes/no | path:line | which method/route changes |
-| Backend tests | yes/no | path | new or updated test cases |
-| Frontend pages | yes/no | path | which page consumes the change |
-| Frontend API module | yes/no | path | which axios wrapper changes |
-| Database / models | yes/no | path | new field, index, or migration |
-| Permissions | yes/no | path | permission constant affected |
-| ENV vars | yes/no | path | new var, value change, removal |
-| Use Case (UC-PACKAGE.md) | yes/no | UC id | flow or contract change |
-| Class Diagram | yes/no | CD id | class added/removed/renamed |
-| Sequence Diagram | yes/no | SD id | new arrow / new participant |
-| Unit Test doc | yes/no | UT id | new or updated case |
-| System Test doc | yes/no | ST id | new or updated scenario |
-| Backlog Status row | yes/no | row id | which task completes |
-| Backlog Issue row | yes/no | row id | new debt surfaced |
-| README | yes/no | section | API table / env table / architecture |
+The matrix has 15 rows. The columns are: `Area | Affected? (Yes/No) | Files | Reason`.
+
+| # | Area | Affected? | Files | Reason |
+| - | ---- | --------- | ----- | ------ |
+| 1 | Backend module(s) | yes/no | path:line | which method/route changes |
+| 2 | Backend tests | yes/no | path | new or updated test cases |
+| 3 | Frontend pages | yes/no | path | which page consumes the change |
+| 4 | Frontend API module | yes/no | path | which axios wrapper changes |
+| 5 | Database / models | yes/no | path | new field, index, or migration |
+| 6 | Permissions | yes/no | path | permission constant affected |
+| 7 | ENV vars | yes/no | path | new var, value change, removal |
+| 8 | Library / Framework (rule 12) | yes/no | path | `package.json` add/upgrade/remove → `DEPENDENCIES.md` + `docs/STACK.md` |
+| 9 | Use Case (UC-PACKAGE.md) | yes/no | UC id | flow or contract change |
+| 10 | Class Diagram | yes/no | CD id | class added/removed/renamed |
+| 11 | Sequence Diagram | yes/no | SD id | new arrow / new participant |
+| 12 | Unit Test doc | yes/no | UT id | new or updated case |
+| 13 | System Test doc | yes/no | ST id | new or updated scenario |
+| 14 | Backlog (Status row + Issue row) | yes/no | row id | which task completes / new debt |
+| 15 | README | yes/no | section | API table / env table / architecture |
 
 ## Decision rule
 
